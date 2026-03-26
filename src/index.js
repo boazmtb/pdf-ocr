@@ -149,6 +149,9 @@ async function handleCallback(jobId, request, env) {
     const data = await request.json();
     if (data.status) {
       await writeStatus(env, jobId, data);
+      if (data.status === 'done') {
+        await sendNotificationEmail(env, jobId, data);
+      }
     }
     return json({ ok: true });
   }
@@ -242,6 +245,52 @@ async function writeStatus(env, jobId, data) {
   }
 
   await env.BUCKET.put(`${jobId}/status.json`, JSON.stringify(merged));
+}
+
+// ── Email notification ──
+async function sendNotificationEmail(env, jobId, data) {
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const base = 'https://pdf.yoffe.net';
+  const sizeMB = data.fileSizeMB || '?';
+  const pages = data.pageCount || '?';
+  const ocrSizeMB = data.ocrSizeMB || '?';
+  const processingTime = data.processingSeconds || '?';
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'PDF OCR <gpx@mail.yoffe.net>',
+        to: ['boaz.yoffe@gmail.com'],
+        subject: `PDF OCR הושלם — ${sizeMB}MB, ${pages} עמודים`,
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px">
+            <h2 style="color:#4f46e5">PDF OCR הושלם בהצלחה</h2>
+            <table style="border-collapse:collapse;width:100%">
+              <tr><td style="padding:6px;border-bottom:1px solid #eee"><b>Job ID</b></td><td style="padding:6px;border-bottom:1px solid #eee;direction:ltr">${jobId}</td></tr>
+              <tr><td style="padding:6px;border-bottom:1px solid #eee"><b>גודל מקור</b></td><td style="padding:6px;border-bottom:1px solid #eee">${sizeMB} MB</td></tr>
+              <tr><td style="padding:6px;border-bottom:1px solid #eee"><b>עמודים</b></td><td style="padding:6px;border-bottom:1px solid #eee">${pages}</td></tr>
+              <tr><td style="padding:6px;border-bottom:1px solid #eee"><b>גודל OCR PDF</b></td><td style="padding:6px;border-bottom:1px solid #eee">${ocrSizeMB} MB</td></tr>
+              <tr><td style="padding:6px;border-bottom:1px solid #eee"><b>זמן עיבוד</b></td><td style="padding:6px;border-bottom:1px solid #eee">${processingTime} שניות</td></tr>
+            </table>
+            <div style="margin-top:16px">
+              <a href="${base}/api/download/${jobId}/pdf" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:white;text-decoration:none;border-radius:8px;margin-left:8px">הורד PDF</a>
+              <a href="${base}/api/download/${jobId}/docx" style="display:inline-block;padding:10px 20px;background:#2563eb;color:white;text-decoration:none;border-radius:8px">הורד DOCX</a>
+            </div>
+            <p style="color:#9ca3af;font-size:12px;margin-top:16px">הקבצים יימחקו אוטומטית בעוד 7 ימים</p>
+          </div>
+        `,
+      }),
+    });
+  } catch (err) {
+    console.error('Email send failed:', err);
+  }
 }
 
 function json(data, status = 200) {

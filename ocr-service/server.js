@@ -49,6 +49,7 @@ app.post('/process', auth, async (req, res) => {
 
   const jobDir = path.join(TMP_DIR, jobId);
   fs.mkdirSync(jobDir, { recursive: true });
+  const startTime = Date.now();
 
   try {
     const inputFile = path.join(jobDir, 'original.pdf');
@@ -95,9 +96,20 @@ app.post('/process', auth, async (req, res) => {
       await putR2(`${jobId}/output.docx`, fs.readFileSync(docxFile));
     }
 
-    // Step 5: Mark done
-    await updateRemoteStatus(jobId, { status: 'done', progress: 100 });
-    console.log(`Job ${jobId} completed`);
+    // Step 5: Gather stats and mark done
+    const originalSize = fs.existsSync(inputFile) ? fs.statSync(inputFile).size : 0;
+    const ocrSize = fs.existsSync(ocrFile) ? fs.statSync(ocrFile).size : 0;
+    const pageCount = await getPageCount(ocrFile);
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+
+    await updateRemoteStatus(jobId, {
+      status: 'done', progress: 100,
+      fileSizeMB: (originalSize / 1024 / 1024).toFixed(1),
+      ocrSizeMB: (ocrSize / 1024 / 1024).toFixed(1),
+      pageCount,
+      processingSeconds: elapsed,
+    });
+    console.log(`Job ${jobId} completed — ${pageCount} pages, ${elapsed}s`);
   } catch (err) {
     console.error(`Job ${jobId} failed:`, err);
     await updateRemoteStatus(jobId, { status: 'error', error: 'שגיאה בעיבוד: ' + err.message });
@@ -222,6 +234,17 @@ function downloadFile(url, dest) {
       }).on('error', reject);
     };
     follow(url);
+  });
+}
+
+// ── Page count ──
+async function getPageCount(pdfFile) {
+  if (!fs.existsSync(pdfFile)) return 0;
+  return new Promise((resolve) => {
+    exec(`grep -c "/Type\\s*/Page" "${pdfFile}"`, (err, stdout) => {
+      const count = parseInt(stdout?.trim()) || 0;
+      resolve(count > 0 ? count : 1);
+    });
   });
 }
 
