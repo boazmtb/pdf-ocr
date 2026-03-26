@@ -2,16 +2,21 @@ name = "pdf-ocr"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
+routes = [
+  { pattern = "pdf.yoffe.net/*", zone_name = "yoffe.net" }
+]
+
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
+fallthrough = true
 
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "pdf-ocr"
 
 [vars]
-OCR_SERVICE_URL = "https://pdf-ocr-service.onrender.com"
+OCR_SERVICE_URL = "https://pdf-ocr-service-bex0.onrender.com"
 
 # Secrets (set via `wrangler secret put`):
 # OCR_API_KEY — shared secret with Render service
