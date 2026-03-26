@@ -1,0 +1,17 @@
+name = "pdf-ocr"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "pdf-ocr"
+
+[vars]
+OCR_SERVICE_URL = "https://pdf-ocr-service.onrender.com"
+
+# Secrets (set via `wrangler secret put`):
+# OCR_API_KEY — shared secret with Render service

@@ -1,0 +1,4 @@
+node_modules/
+uploads/
+ocr-service/tmp/
+.wrangler/
