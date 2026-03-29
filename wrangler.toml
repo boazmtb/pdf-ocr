@@ -23,12 +23,7 @@ class_name = "OcrContainer"
 image = "./ocr-service/Dockerfile"
 max_instances = 1
 
-[containers.env]
-R2_ACCOUNT_ID = "a8671341e2d38848e45b5138c7d42951"
-R2_BUCKET_NAME = "pdf-ocr"
-R2_ACCESS_KEY_ID = "ec4278f028317f1e36669c25b771ef96"
-R2_SECRET_ACCESS_KEY = "23957aa937e8786dc093b381981541ecccd35728efa5fb87b5e046c9eff8cbeb"
-RESEND_API_KEY = "re_d9SBkVgP_i41TtsR8vYcTtMH8ttjNMLGp"
+environment_variables = { R2_ACCOUNT_ID = "a8671341e2d38848e45b5138c7d42951", R2_BUCKET_NAME = "pdf-ocr", R2_ACCESS_KEY_ID = "ec4278f028317f1e36669c25b771ef96", R2_SECRET_ACCESS_KEY = "23957aa937e8786dc093b381981541ecccd35728efa5fb87b5e046c9eff8cbeb", RESEND_API_KEY = "re_d9SBkVgP_i41TtsR8vYcTtMH8ttjNMLGp" }
 
 [[durable_objects.bindings]]
 class_name = "OcrContainer"
