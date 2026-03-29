@@ -1,27 +1,26 @@
-  name: Deploy PDF OCR                                                             
+ name: Deploy PDF OCR                                                 
    
-  on:                                                                              
+  on:                                                                  
     push:                                                   
       branches: [main]
     workflow_dispatch:
 
-  jobs:                                                                            
+  jobs:
     deploy:
-      runs-on: ubuntu-latest                                                       
-      steps:                                                
+      runs-on: ubuntu-latest
+      steps:
         - uses: actions/checkout@v4
-
+                                                                       
         - uses: actions/setup-node@v4
-          with:
-            node-version: '20'
+          with:                                                        
+            node-version: '20'                              
 
-        - name: Install wrangler                                                   
+        - name: Install wrangler
           run: npm install -g wrangler
-                                                                                   
-        - name: Deploy Worker + Container                   
-          run: wrangler deploy
-          env:
-            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-            curl "https://api.cloudflare.com/client/v4/user/tokens/verify" \
--H "Authorization: Bearer cfut_wscyRnZsKGRwJGyhFbOX2biTmvLra7P3adEKH0Oececa1198"
 
+        - name: Deploy Worker + Container
+          run: wrangler deploy
+          env:                                                         
+            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            CLOUDFLARE_ACCOUNT_ID: a8671341e2d38848e45b5138c7d42951    
+                                                                     
